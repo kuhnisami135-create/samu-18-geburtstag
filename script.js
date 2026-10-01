@@ -6,7 +6,7 @@ const SUPABASE_URL =
     "https://rhqxlhoqlrwhordtcrew.supabase.co";
 
 const SUPABASE_KEY =
-    "sb_publishable_O448xTB2EUrv-935BYyZ8Q_9VV4wBcs";
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJocXhsaG9xbHJ3aG9yZHRjcmV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4NDg4ODgsImV4cCI6MjEwNjQyNDg4OH0.ztmFuaanXRHaThmYRdXWY3XciIn7QXbBcx3jEH_2FjE";
 
 const supabaseClient =
     window.supabase.createClient(
@@ -119,41 +119,33 @@ form.onsubmit = async function (event) {
 
 
     submitButton.disabled = true;
-
-    submitButton.textContent =
-        "Wird gespeichert...";
+    submitButton.textContent = "Wird gespeichert...";
 
 
     try {
 
-        const result =
+        const { error } =
             await supabaseClient
                 .from("responses")
                 .insert({
                     name: name,
                     attending: attending
-                })
-                .select();
+                });
 
 
-        console.log("Supabase Ergebnis:", result);
-
-
-        if (result.error) {
+        if (error) {
 
             console.error(
                 "Supabase Fehler:",
-                result.error
+                error
             );
 
             showMessage(
-                "Fehler: " +
-                result.error.message,
+                "Fehler: " + error.message,
                 "error"
             );
 
             submitButton.disabled = false;
-
             submitButton.textContent =
                 "Antwort abschicken";
 
@@ -184,6 +176,7 @@ form.onsubmit = async function (event) {
             );
         }
 
+
     } catch (error) {
 
         console.error(
@@ -192,13 +185,11 @@ form.onsubmit = async function (event) {
         );
 
         showMessage(
-            "Verbindungsfehler: " +
-            error.message,
+            "Verbindungsfehler: " + error.message,
             "error"
         );
 
         submitButton.disabled = false;
-
         submitButton.textContent =
             "Antwort abschicken";
     }
