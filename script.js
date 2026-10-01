@@ -1,7 +1,7 @@
 // ============================================
 // SUPABASE
 // ============================================
-const SUPABASE_URL = "https://rhqxlhoqlrwhordtcrew.supabase.co/rest/v1/";
+const SUPABASE_URL = "https://rhqxlhoqlrwhordtcrew.supabase.co";
 const SUPABASE_KEY = "sb_publishable_O448xTB2EUrv-935BYyZ8Q_9VV4wBcs";
 const supabaseClient = window.supabase.createClient(
     SUPABASE_URL,
