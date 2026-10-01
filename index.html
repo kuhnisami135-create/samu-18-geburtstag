@@ -2,25 +2,46 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
+
     <title>Samu wird 18! 🎉</title>
-    <link rel="stylesheet" href="style.css">
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
 </head>
+
 <body>
+
     <main class="card">
-        <div class="emoji">🎉</div>
-        <h1>Ich werde 18!</h1>
-        <p class="date">08.01.2027</p>
+
+        <div class="emoji">
+            🎉
+        </div>
+
+        <h1>
+            Ich werde 18!
+        </h1>
+
+        <p class="date">
+            08.01.2027
+        </p>
+
         <p class="intro">
             Du bist herzlich eingeladen! 🥳
         </p>
+
         <form id="rsvpForm">
+
             <label for="name">
                 Wie heißt du?
             </label>
+
             <input
                 id="name"
                 type="text"
@@ -29,40 +50,49 @@
                 autocomplete="name"
                 required
             >
+
             <div class="buttons">
+
                 <button
                     type="button"
                     class="choice"
-                    data-attending="true"
                     id="yesButton"
                 >
                     🥳 Ich bin dabei
                 </button>
+
                 <button
                     type="button"
                     class="choice"
-                    data-attending="false"
                     id="noButton"
                 >
                     🥲 Ich kann leider nicht
                 </button>
+
             </div>
+
             <button
                 type="submit"
                 class="submit"
                 id="submitButton"
-                disabled
             >
                 Antwort abschicken
             </button>
+
         </form>
+
         <div
             id="message"
             class="message hidden"
         ></div>
+
     </main>
+
     <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Eigene JavaScript-Datei -->
     <script src="script.js"></script>
+
 </body>
 </html>
