@@ -1,97 +1,327 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-    <title>Samus 18. – Teilnehmer</title>
-    <link
-        rel="stylesheet"
-        href="admin.css"
-    >
-</head>
-<body>
-    <main class="container">
-        <section id="loginSection">
-            <div class="card">
-                <div class="emoji">🔐</div>
-                <h1>Samus 18.</h1>
-                <p>
-                    Admin-Bereich
-                </p>
-                <input
-                    id="email"
-                    type="email"
-                    placeholder="Deine E-Mail-Adresse"
-                    autocomplete="email"
-                >
-                <button
-                    id="loginButton"
-                >
-                    Login-Link senden
-                </button>
-                <p
-                    id="loginMessage"
-                    class="message"
-                ></p>
-            </div>
-        </section>
-        <section
-            id="adminSection"
-            class="hidden"
-        >
-            <div class="header">
-                <div>
-                    <h1>🎉 Samus 18.</h1>
-                    <p>
-                        Teilnehmerübersicht
-                    </p>
-                </div>
-                <button
-                    id="logoutButton"
-                    class="logout"
-                >
-                    Abmelden
-                </button>
-            </div>
-            <div class="stats">
-                <div class="stat">
-                    <span id="yesCount">
-                        0
-                    </span>
-                    <small>
-                        🥳 Zusagen
-                    </small>
-                </div>
-                <div class="stat">
-                    <span id="noCount">
-                        0
-                    </span>
-                    <small>
-                        🥲 Absagen
-                    </small>
-                </div>
-                <div class="stat">
-                    <span id="totalCount">
-                        0
-                    </span>
-                    <small>
-                        Antworten
-                    </small>
-                </div>
-            </div>
-            <button
-                id="refreshButton"
-                class="refresh"
-            >
-                🔄 Aktualisieren
-            </button>
-            <div id="responses"></div>
-        </section>
-    </main>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="admin.js"></script>
-</body>
-</html>
+// ============================================
+// SUPABASE
+// ============================================
+
+const SUPABASE_URL =
+    "https://rhqxlhoqlrwhordtcrew.supabase.co";
+
+const SUPABASE_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJocXhsaG9xbHJ3aG9yZHRjcmV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4NDg4ODgsImV4cCI6MjEwNjQyNDg4OH0.ztmFuaanXRHaThmYRdXWY3XciIn7QXbBcx3jEH_2FjE";
+
+const supabaseClient =
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
+// ============================================
+// ELEMENTE
+// ============================================
+
+const loginForm = document.getElementById("loginForm");
+const emailInput = document.getElementById("email");
+const loginMessage = document.getElementById("loginMessage");
+
+const adminPanel = document.getElementById("adminPanel");
+const loginPanel = document.getElementById("loginPanel");
+
+const participants = document.getElementById("participants");
+const totalCount = document.getElementById("totalCount");
+const yesCount = document.getElementById("yesCount");
+const noCount = document.getElementById("noCount");
+
+const logoutButton = document.getElementById("logoutButton");
+
+
+// ============================================
+// LOGIN
+// ============================================
+
+if (loginForm) {
+
+    loginForm.onsubmit = async function (event) {
+
+        event.preventDefault();
+
+        const email =
+            emailInput.value.trim();
+
+        if (!email) {
+            showLoginMessage(
+                "Bitte E-Mail-Adresse eingeben."
+            );
+            return;
+        }
+
+        showLoginMessage(
+            "Login-Link wird gesendet..."
+        );
+
+        const { error } =
+            await supabaseClient.auth.signInWithOtp({
+                email: email,
+                options: {
+                    emailRedirectTo:
+                        "https://kuhnisami135-create.github.io/samu-18-geburtstag/admin.html"
+                }
+            });
+
+        if (error) {
+
+            console.error(error);
+
+            showLoginMessage(
+                "Fehler: " + error.message
+            );
+
+            return;
+        }
+
+        showLoginMessage(
+            "Login-Link wurde an deine E-Mail gesendet."
+        );
+    };
+}
+
+
+// ============================================
+// SESSION PRÜFEN
+// ============================================
+
+checkSession();
+
+async function checkSession() {
+
+    const {
+        data: { session }
+    } = await supabaseClient.auth.getSession();
+
+    if (session) {
+
+        showAdminPanel();
+
+        loadParticipants();
+
+    } else {
+
+        showLoginPanel();
+    }
+}
+
+
+// ============================================
+// ADMIN ANZEIGEN
+// ============================================
+
+function showAdminPanel() {
+
+    if (loginPanel) {
+        loginPanel.classList.add("hidden");
+    }
+
+    if (adminPanel) {
+        adminPanel.classList.remove("hidden");
+    }
+}
+
+
+// ============================================
+// LOGIN ANZEIGEN
+// ============================================
+
+function showLoginPanel() {
+
+    if (loginPanel) {
+        loginPanel.classList.remove("hidden");
+    }
+
+    if (adminPanel) {
+        adminPanel.classList.add("hidden");
+    }
+}
+
+
+// ============================================
+// TEILNEHMER LADEN
+// ============================================
+
+async function loadParticipants() {
+
+    participants.innerHTML =
+        "<p>Teilnehmer werden geladen...</p>";
+
+
+    const { data, error } =
+        await supabaseClient
+            .from("responses")
+            .select("*")
+            .order("created_at", {
+                ascending: false
+            });
+
+
+    if (error) {
+
+        console.error(
+            "Fehler beim Laden:",
+            error
+        );
+
+        participants.innerHTML =
+            `<p class="error">
+                Fehler beim Laden:<br>
+                ${error.message}
+            </p>`;
+
+        return;
+    }
+
+
+    console.log(
+        "Teilnehmer:",
+        data
+    );
+
+
+    // ========================================
+    // ZÄHLER
+    // ========================================
+
+    const total =
+        data.length;
+
+    const attending =
+        data.filter(
+            person => person.attending === true
+        ).length;
+
+    const notAttending =
+        data.filter(
+            person => person.attending === false
+        ).length;
+
+
+    if (totalCount) {
+        totalCount.textContent = total;
+    }
+
+    if (yesCount) {
+        yesCount.textContent = attending;
+    }
+
+    if (noCount) {
+        noCount.textContent = notAttending;
+    }
+
+
+    // ========================================
+    // KEINE TEILNEHMER
+    // ========================================
+
+    if (data.length === 0) {
+
+        participants.innerHTML =
+            "<p>Noch keine Antworten vorhanden.</p>";
+
+        return;
+    }
+
+
+    // ========================================
+    // LISTE
+    // ========================================
+
+    participants.innerHTML = "";
+
+
+    data.forEach(person => {
+
+        const item =
+            document.createElement("div");
+
+        item.className =
+            "participant";
+
+
+        const status =
+            person.attending
+                ? "🥳 Dabei"
+                : "🥲 Nicht dabei";
+
+
+        item.innerHTML = `
+            <strong>${escapeHtml(person.name)}</strong>
+            <span>${status}</span>
+        `;
+
+
+        participants.appendChild(item);
+
+    });
+}
+
+
+// ============================================
+// HTML SICHER AUSGEBEN
+// ============================================
+
+function escapeHtml(text) {
+
+    const div =
+        document.createElement("div");
+
+    div.textContent = text;
+
+    return div.innerHTML;
+}
+
+
+// ============================================
+// LOGOUT
+// ============================================
+
+if (logoutButton) {
+
+    logoutButton.onclick = async function () {
+
+        await supabaseClient.auth.signOut();
+
+        location.reload();
+    };
+}
+
+
+// ============================================
+// LOGIN-MELDUNG
+// ============================================
+
+function showLoginMessage(text) {
+
+    if (loginMessage) {
+
+        loginMessage.textContent =
+            text;
+    }
+}
+
+
+// ============================================
+// AUTH-ÄNDERUNGEN
+// ============================================
+
+supabaseClient.auth.onAuthStateChange(
+    function (event, session) {
+
+        if (session) {
+
+            showAdminPanel();
+
+            loadParticipants();
+
+        } else {
+
+            showLoginPanel();
+        }
+    }
+);
