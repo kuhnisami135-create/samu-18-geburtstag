@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+    <title>Samus 18. – Teilnehmer</title>
+    <link
+        rel="stylesheet"
+        href="admin.css"
+    >
+</head>
+<body>
+    <main class="container">
+        <section id="loginSection">
+            <div class="card">
+                <div class="emoji">🔐</div>
+                <h1>Samus 18.</h1>
+                <p>
+                    Admin-Bereich
+                </p>
+                <input
+                    id="email"
+                    type="email"
+                    placeholder="Deine E-Mail-Adresse"
+                    autocomplete="email"
+                >
+                <button
+                    id="loginButton"
+                >
+                    Login-Link senden
+                </button>
+                <p
+                    id="loginMessage"
+                    class="message"
+                ></p>
+            </div>
+        </section>
+        <section
+            id="adminSection"
+            class="hidden"
+        >
+            <div class="header">
+                <div>
+                    <h1>🎉 Samus 18.</h1>
+                    <p>
+                        Teilnehmerübersicht
+                    </p>
+                </div>
+                <button
+                    id="logoutButton"
+                    class="logout"
+                >
+                    Abmelden
+                </button>
+            </div>
+            <div class="stats">
+                <div class="stat">
+                    <span id="yesCount">
+                        0
+                    </span>
+                    <small>
+                        🥳 Zusagen
+                    </small>
+                </div>
+                <div class="stat">
+                    <span id="noCount">
+                        0
+                    </span>
+                    <small>
+                        🥲 Absagen
+                    </small>
+                </div>
+                <div class="stat">
+                    <span id="totalCount">
+                        0
+                    </span>
+                    <small>
+                        Antworten
+                    </small>
+                </div>
+            </div>
+            <button
+                id="refreshButton"
+                class="refresh"
+            >
+                🔄 Aktualisieren
+            </button>
+            <div id="responses"></div>
+        </section>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="admin.js"></script>
+</body>
+</html>
