@@ -16,23 +16,12 @@ const supabaseClient =
 // ============================================
 // ELEMENTE
 // ============================================
-const form =
-    document.getElementById("rsvpForm");
-
-const nameInput =
-    document.getElementById("name");
-
-const yesButton =
-    document.getElementById("yesButton");
-
-const noButton =
-    document.getElementById("noButton");
-
-const submitButton =
-    document.getElementById("submitButton");
-
-const message =
-    document.getElementById("message");
+const form = document.getElementById("rsvpForm");
+const nameInput = document.getElementById("name");
+const yesButton = document.getElementById("yesButton");
+const noButton = document.getElementById("noButton");
+const submitButton = document.getElementById("submitButton");
+const message = document.getElementById("message");
 
 // ============================================
 // STATUS
@@ -42,138 +31,129 @@ let attending = null;
 // ============================================
 // AUSWAHL
 // ============================================
-function selectAnswer(value) {
-    attending = value;
+yesButton.onclick = function () {
+    attending = true;
 
-    yesButton.classList.remove("selected");
+    yesButton.classList.add("selected");
     noButton.classList.remove("selected");
 
-    if (value === true) {
-        yesButton.classList.add("selected");
-    }
+    updateButton();
+};
 
-    if (value === false) {
-        noButton.classList.add("selected");
-    }
+noButton.onclick = function () {
+    attending = false;
+
+    noButton.classList.add("selected");
+    yesButton.classList.remove("selected");
 
     updateButton();
-}
+};
 
 // ============================================
-// ABSENDEN AKTIVIEREN
+// NAME ÄNDERT SICH
+// ============================================
+nameInput.oninput = function () {
+    updateButton();
+};
+
+// ============================================
+// BUTTON AKTIVIEREN
 // ============================================
 function updateButton() {
-    const validName =
+
+    const nameOK =
         nameInput.value.trim().length >= 2;
 
+    const answerOK =
+        attending !== null;
+
     submitButton.disabled =
-        !validName || attending === null;
+        !(nameOK && answerOK);
 }
 
 // ============================================
-// BUTTONS
+// ABSENDEN
 // ============================================
-yesButton.addEventListener(
-    "click",
-    () => selectAnswer(true)
-);
+form.onsubmit = async function (event) {
 
-noButton.addEventListener(
-    "click",
-    () => selectAnswer(false)
-);
+    event.preventDefault();
 
-nameInput.addEventListener(
-    "input",
-    updateButton
-);
+    const name =
+        nameInput.value.trim();
 
-// ============================================
-// FORMULAR
-// ============================================
-form.addEventListener(
-    "submit",
-    async (event) => {
+    if (name.length < 2) {
+        showMessage(
+            "Bitte gib deinen Namen ein.",
+            "error"
+        );
+        return;
+    }
 
-        event.preventDefault();
+    if (attending === null) {
+        showMessage(
+            "Bitte wähle aus, ob du dabei bist.",
+            "error"
+        );
+        return;
+    }
 
-        const name =
-            nameInput.value.trim();
+    submitButton.disabled = true;
 
-        if (name.length < 2) {
-            showMessage(
-                "Bitte gib deinen Namen ein.",
-                "error"
-            );
-            return;
-        }
+    submitButton.textContent =
+        "Wird gespeichert...";
 
-        if (attending === null) {
-            showMessage(
-                "Bitte wähle aus, ob du dabei bist.",
-                "error"
-            );
-            return;
-        }
-
-        submitButton.disabled = true;
-
-        submitButton.textContent =
-            "Wird gespeichert...";
-
-        const { error } =
-            await supabaseClient
-                .from("responses")
-                .insert({
+    const { error } =
+        await supabaseClient
+            .from("responses")
+            .insert([
+                {
                     name: name,
                     attending: attending
-                });
+                }
+            ]);
 
-        // ========================================
-        // FEHLER
-        // ========================================
-        if (error) {
+    if (error) {
 
-            console.error(
-                "Supabase Fehler:",
-                error
-            );
+        console.error(
+            "Supabase Fehler:",
+            error
+        );
 
-            showMessage(
-                "Fehler: " + error.message,
-                "error"
-            );
+        showMessage(
+            "Fehler: " + error.message,
+            "error"
+        );
 
-            submitButton.disabled = false;
+        submitButton.disabled = false;
 
-            submitButton.textContent =
-                "Antwort abschicken";
+        submitButton.textContent =
+            "Antwort abschicken";
 
-            return;
-        }
-
-        // ========================================
-        // ERFOLG
-        // ========================================
-        form.classList.add("hidden");
-
-        if (attending) {
-
-            showMessage(
-                `Danke ${name}! 🥳<br><br>
-                Ich freu mich, dass du dabei bist!`,
-                "success"
-            );
-
-        } else {
-
-            showMessage(
-                `Danke für deine Rückmeldung, ${name}! ❤️`,
-                "success"
-            );
-        }
+        return;
     }
-);
+
+    // ========================================
+    // ERFOLG
+    // ========================================
+
+    form.classList.add("hidden");
+
+    if (attending === true) {
+
+        showMessage(
+            `Danke ${name}! 🥳<br><br>
+            Ich freu mich, dass du dabei bist!`,
+            "success"
+        );
+
+    } else {
+
+        showMessage(
+            `Danke für deine Rückmeldung, ${name}! ❤️`,
+            "success"
+        );
+    }
+};
 
 // ============================================
 // MELDUNG
@@ -183,5 +163,5 @@ function showMessage(text, type) {
     message.innerHTML = text;
 
     message.className =
-        `message ${type}`;
+        "message " + type;
 }
