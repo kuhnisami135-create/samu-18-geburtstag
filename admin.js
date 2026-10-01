@@ -50,7 +50,7 @@ loginButton.addEventListener(
                 email: email,
                 options: {
                     emailRedirectTo:
-                        window.location.href
+    "https://kuhnisami135-create.github.io/samu-18-geburtstag/admin.html"
                 }
             });
         if (error) {
