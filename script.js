@@ -89,9 +89,13 @@ form.addEventListener("submit", async (event) => {
             attending: attending
         });
     if (error) {
-        console.error(error);
-        showMessage(
-            "Ups, da ist etwas schiefgelaufen. Versuch es bitte nochmal.",
+    console.error("Supabase Fehler:", error);
+
+    message.textContent =
+        "Fehler: " + error.message;
+
+    return;
+}
             "error"
         );
         submitButton.disabled = false;
