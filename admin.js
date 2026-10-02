@@ -2,17 +2,11 @@
 // SUPABASE
 // ============================================
 
-const SUPABASE_URL =
-    "https://rhqxlhoqlrwhordtcrew.supabase.co";
+const SUPABASE_URL = "https://rhqxlhoqlrwhordtcrew.supabase.co";
 
-const SUPABASE_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJocXhsaG9xbHJ3aG9yZHRjcmV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4NDg4ODgsImV4cCI6MjEwNjQyNDg4OH0.ztmFuaanXRHaThmYRdXWY3XciIn7QXbBcx3jEH_2FjE";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJocXhsaG9xbHJ3aG9yZHRjcmV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4NDg4ODgsImV4cCI6MjEwNjQyNDg4OH0.ztmFuaanXRHaThmYRdXWY3XciIn7QXbBcx3jEH_2FjE";
 
-const supabaseClient =
-    window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
-    );
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 
 // ============================================
@@ -23,11 +17,10 @@ const loginForm = document.getElementById("loginForm");
 const emailInput = document.getElementById("email");
 const loginMessage = document.getElementById("loginMessage");
 
-const adminPanel = document.getElementById("adminPanel");
 const loginPanel = document.getElementById("loginPanel");
+const adminPanel = document.getElementById("adminPanel");
 
 const participants = document.getElementById("participants");
-
 const totalCount = document.getElementById("totalCount");
 const yesCount = document.getElementById("yesCount");
 const noCount = document.getElementById("noCount");
@@ -36,62 +29,48 @@ const logoutButton = document.getElementById("logoutButton");
 
 
 // ============================================
+// HILFSFUNKTIONEN
+// ============================================
+
+function showLoginMessage(text, isError = false) {
+    loginMessage.style.display = "block";
+    loginMessage.textContent = text;
+    loginMessage.style.background = isError
+        ? "rgba(255, 80, 80, 0.2)"
+        : "rgba(255, 255, 255, 0.1)";
+}
+
+
+// ============================================
 // LOGIN
 // ============================================
 
 if (loginForm) {
-
     loginForm.onsubmit = async function (event) {
-
         event.preventDefault();
 
-        const email =
-            emailInput.value.trim();
+        const email = emailInput.value.trim();
 
         if (!email) {
-
-            showLoginMessage(
-                "Bitte E-Mail-Adresse eingeben."
-            );
-
+            showLoginMessage("Bitte E-Mail-Adresse eingeben.", true);
             return;
         }
 
-        showLoginMessage(
-            "Login-Link wird gesendet..."
-        );
+        showLoginMessage("Login-Link wird gesendet...");
 
-        const { error } =
-            await supabaseClient.auth.signInWithOtp({
-
-                email: email,
-
-                options: {
-                    emailRedirectTo:
-                        "https://kuhnisami135-create.github.io/samu-18-geburtstag/admin.html"
-                }
-
-            });
-
+        const { error } = await supabaseClient.auth.signInWithOtp({
+            email: email,
+            options: {
+                emailRedirectTo: window.location.href  // leitet zurück auf admin.html
+            }
+        });
 
         if (error) {
-
-            console.error(
-                "LOGIN FEHLER:",
-                error
-            );
-
-            showLoginMessage(
-                "Fehler: " + error.message
-            );
-
-            return;
+            console.error(error);
+            showLoginMessage("Fehler: " + error.message, true);
+        } else {
+            showLoginMessage("✓ Login-Link wurde an deine E-Mail gesendet. Bitte klicke den Link in der Mail.");
         }
-
-
-        showLoginMessage(
-            "Login-Link wurde gesendet. Prüfe deine E-Mails."
-        );
     };
 }
 
@@ -101,308 +80,89 @@ if (loginForm) {
 // ============================================
 
 async function checkSession() {
-
-    const {
-        data,
-        error
-    } =
-        await supabaseClient.auth.getSession();
-
-
-    console.log(
-        "SESSION:",
-        data.session
-    );
-
+    const { data: { session }, error } = await supabaseClient.auth.getSession();
 
     if (error) {
-
-        console.error(
-            "SESSION FEHLER:",
-            error
-        );
-
-        showLoginMessage(
-            "Session-Fehler: " +
-            error.message
-        );
-
-        showLoginPanel();
-
+        console.error("Session-Fehler:", error);
         return;
     }
 
+    if (session) {
+        // Eingeloggt → Admin-Panel zeigen
+        loginPanel.style.display = "none";
+        adminPanel.style.display = "block";
 
-    if (!data.session) {
-
-        console.log(
-            "KEINE SESSION VORHANDEN"
-        );
-
-        showLoginPanel();
-
-        return;
+        // Gästeliste laden
+        loadParticipants();
+    } else {
+        // Nicht eingeloggt → Login zeigen
+        loginPanel.style.display = "block";
+        adminPanel.style.display = "none";
     }
-
-
-    const user =
-        data.session.user;
-
-
-    console.log(
-        "EINGELOGGT:",
-        user
-    );
-
-
-    console.log(
-        "E-MAIL:",
-        user.email
-    );
-
-
-    console.log(
-        "USER ID:",
-        user.id
-    );
-
-
-    // ========================================
-    // ADMIN ANZEIGEN
-    // ========================================
-
-    showAdminPanel();
-
-
-    // Zeigt zur Kontrolle die erkannte E-Mail
-    if (participants) {
-
-        participants.innerHTML = `
-            <p>
-                Eingeloggt als:<br>
-                <strong>${escapeHtml(user.email || "Keine E-Mail")}</strong>
-            </p>
-            <p>Teilnehmer werden geladen...</p>
-        `;
-    }
-
-
-    await loadParticipants();
 }
 
 
 // ============================================
-// TEILNEHMER LADEN
+// GÄSTELISTE LADEN
 // ============================================
 
 async function loadParticipants() {
+    participants.innerHTML = "Lade Teilnehmer...";
 
-    const {
-        data,
-        error
-    } =
-        await supabaseClient
-            .from("responses")
-            .select("*")
-            .order("created_at", {
-                ascending: false
-            });
-
-
-    console.log(
-        "SELECT ERGEBNIS:",
-        data
-    );
-
-
-    console.log(
-        "SELECT FEHLER:",
-        error
-    );
-
-
-    // ========================================
-    // FEHLER
-    // ========================================
+    const { data, error } = await supabaseClient
+        .from("responses")          // ← Tabellenname anpassen falls anders
+        .select("*")
+        .order("created_at", { ascending: false });
 
     if (error) {
-
+        console.error("Fehler beim Laden:", error);
         participants.innerHTML = `
-            <div class="error">
-                <strong>Fehler beim Laden:</strong><br><br>
-                ${escapeHtml(error.message)}
+            <div style="color: #f87171; padding: 15px;">
+                Fehler beim Laden der Gästeliste:<br>
+                <strong>${error.message}</strong><br><br>
+                (Wahrscheinlich RLS – bist du mit der richtigen E-Mail eingeloggt?)
             </div>
         `;
-
         return;
     }
 
-
-    // ========================================
-    // ZÄHLER
-    // ========================================
-
-    const total =
-        data.length;
-
-    const attending =
-        data.filter(
-            person =>
-                person.attending === true
-        ).length;
-
-    const notAttending =
-        data.filter(
-            person =>
-                person.attending === false
-        ).length;
-
-
-    if (totalCount) {
-
-        totalCount.textContent =
-            total;
-    }
-
-
-    if (yesCount) {
-
-        yesCount.textContent =
-            attending;
-    }
-
-
-    if (noCount) {
-
-        noCount.textContent =
-            notAttending;
-    }
-
-
-    // ========================================
-    // KEINE ANTWORTEN
-    // ========================================
-
-    if (data.length === 0) {
-
-        participants.innerHTML =
-            "<p>Noch keine Antworten vorhanden.</p>";
-
+    if (!data || data.length === 0) {
+        participants.innerHTML = "Noch keine Antworten vorhanden.";
+        totalCount.textContent = "0";
+        yesCount.textContent = "0";
+        noCount.textContent = "0";
         return;
     }
 
+    // Zählen
+    let yes = 0;
+    let no = 0;
 
-    // ========================================
-    // LISTE
-    // ========================================
-
-    participants.innerHTML = "";
-
-
-    data.forEach(person => {
-
-        const item =
-            document.createElement("div");
-
-        item.className =
-            "participant";
-
-
-        const status =
-            person.attending
-                ? "🥳 Dabei"
-                : "🥲 Nicht dabei";
-
-
-        item.innerHTML = `
-            <strong>
-                ${escapeHtml(person.name)}
-            </strong>
-            <span>
-                ${status}
-            </span>
-        `;
-
-
-        participants.appendChild(item);
-
+    data.forEach(item => {
+        if (item.attending === true || item.attending === "yes" || item.attending === "ja") {
+            yes++;
+        } else {
+            no++;
+        }
     });
-}
 
+    totalCount.textContent = data.length;
+    yesCount.textContent = yes;
+    noCount.textContent = no;
 
-// ============================================
-// HTML SICHER AUSGEBEN
-// ============================================
+    // Liste anzeigen
+    participants.innerHTML = data.map(item => {
+        const isYes = item.attending === true || item.attending === "yes" || item.attending === "ja";
+        const name = item.name || item.full_name || item.email || "Unbekannt";
+        const status = isYes ? "✅ Dabei" : "❌ Nicht dabei";
 
-function escapeHtml(text) {
-
-    const div =
-        document.createElement("div");
-
-    div.textContent =
-        text;
-
-    return div.innerHTML;
-}
-
-
-// ============================================
-// ADMIN ANZEIGEN
-// ============================================
-
-function showAdminPanel() {
-
-    if (loginPanel) {
-
-        loginPanel.classList.add(
-            "hidden"
-        );
-    }
-
-
-    if (adminPanel) {
-
-        adminPanel.classList.remove(
-            "hidden"
-        );
-    }
-}
-
-
-// ============================================
-// LOGIN ANZEIGEN
-// ============================================
-
-function showLoginPanel() {
-
-    if (loginPanel) {
-
-        loginPanel.classList.remove(
-            "hidden"
-        );
-    }
-
-
-    if (adminPanel) {
-
-        adminPanel.classList.add(
-            "hidden"
-        );
-    }
-}
-
-
-// ============================================
-// LOGIN-MELDUNG
-// ============================================
-
-function showLoginMessage(text) {
-
-    if (loginMessage) {
-
-        loginMessage.textContent =
-            text;
-    }
+        return `
+            <div class="participant ${isYes ? "yes" : "no"}">
+                <span>${name}</span>
+                <span style="opacity: 0.8; font-size: 14px;">${status}</span>
+            </div>
+        `;
+    }).join("");
 }
 
 
@@ -411,52 +171,27 @@ function showLoginMessage(text) {
 // ============================================
 
 if (logoutButton) {
-
-    logoutButton.onclick =
-        async function () {
-
-            await supabaseClient.auth.signOut();
-
-            location.reload();
-        };
+    logoutButton.onclick = async function () {
+        await supabaseClient.auth.signOut();
+        location.reload();
+    };
 }
-
-
-// ============================================
-// AUTH-ÄNDERUNGEN
-// ============================================
-
-supabaseClient.auth.onAuthStateChange(
-    async function (event, session) {
-
-        console.log(
-            "AUTH EVENT:",
-            event
-        );
-
-
-        console.log(
-            "AUTH SESSION:",
-            session
-        );
-
-
-        if (session) {
-
-            showAdminPanel();
-
-            await loadParticipants();
-
-        } else {
-
-            showLoginPanel();
-        }
-    }
-);
 
 
 // ============================================
 // START
 // ============================================
 
+// Beim Laden der Seite Session prüfen
 checkSession();
+
+// Auch auf Auth-Änderungen reagieren (z.B. nach Magic Link)
+supabaseClient.auth.onAuthStateChange((event, session) => {
+    if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        checkSession();
+    }
+    if (event === "SIGNED_OUT") {
+        loginPanel.style.display = "block";
+        adminPanel.style.display = "none";
+    }
+});
