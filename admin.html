@@ -1,327 +1,464 @@
-// ============================================
-// SUPABASE
-// ============================================
+<!DOCTYPE html>
+<html lang="de">
 
-const SUPABASE_URL =
-    "https://rhqxlhoqlrwhordtcrew.supabase.co";
+<head>
 
-const SUPABASE_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJocXhsaG9xbHJ3aG9yZHRjcmV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4NDg4ODgsImV4cCI6MjEwNjQyNDg4OH0.ztmFuaanXRHaThmYRdXWY3XciIn7QXbBcx3jEH_2FjE";
+    <meta charset="UTF-8">
 
-const supabaseClient =
-    window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
-    );
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
+    <title>Admin – Samu wird 18 🎉</title>
 
-// ============================================
-// ELEMENTE
-// ============================================
+    <style>
 
-const loginForm = document.getElementById("loginForm");
-const emailInput = document.getElementById("email");
-const loginMessage = document.getElementById("loginMessage");
-
-const adminPanel = document.getElementById("adminPanel");
-const loginPanel = document.getElementById("loginPanel");
-
-const participants = document.getElementById("participants");
-const totalCount = document.getElementById("totalCount");
-const yesCount = document.getElementById("yesCount");
-const noCount = document.getElementById("noCount");
-
-const logoutButton = document.getElementById("logoutButton");
-
-
-// ============================================
-// LOGIN
-// ============================================
-
-if (loginForm) {
-
-    loginForm.onsubmit = async function (event) {
-
-        event.preventDefault();
-
-        const email =
-            emailInput.value.trim();
-
-        if (!email) {
-            showLoginMessage(
-                "Bitte E-Mail-Adresse eingeben."
-            );
-            return;
+        * {
+            box-sizing: border-box;
         }
 
-        showLoginMessage(
-            "Login-Link wird gesendet..."
-        );
+        body {
 
-        const { error } =
-            await supabaseClient.auth.signInWithOtp({
-                email: email,
-                options: {
-                    emailRedirectTo:
-                        "https://kuhnisami135-create.github.io/samu-18-geburtstag/admin.html"
-                }
-            });
+            margin: 0;
 
-        if (error) {
+            min-height: 100vh;
 
-            console.error(error);
+            padding: 20px;
 
-            showLoginMessage(
-                "Fehler: " + error.message
-            );
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
 
-            return;
+            background:
+                linear-gradient(
+                    135deg,
+                    #151515,
+                    #292929
+                );
+
+            color: white;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
         }
 
-        showLoginMessage(
-            "Login-Link wurde an deine E-Mail gesendet."
-        );
-    };
-}
 
+        .container {
 
-// ============================================
-// SESSION PRÜFEN
-// ============================================
+            width: 100%;
 
-checkSession();
-
-async function checkSession() {
-
-    const {
-        data: { session }
-    } = await supabaseClient.auth.getSession();
-
-    if (session) {
-
-        showAdminPanel();
-
-        loadParticipants();
-
-    } else {
-
-        showLoginPanel();
-    }
-}
-
-
-// ============================================
-// ADMIN ANZEIGEN
-// ============================================
-
-function showAdminPanel() {
-
-    if (loginPanel) {
-        loginPanel.classList.add("hidden");
-    }
-
-    if (adminPanel) {
-        adminPanel.classList.remove("hidden");
-    }
-}
-
-
-// ============================================
-// LOGIN ANZEIGEN
-// ============================================
-
-function showLoginPanel() {
-
-    if (loginPanel) {
-        loginPanel.classList.remove("hidden");
-    }
-
-    if (adminPanel) {
-        adminPanel.classList.add("hidden");
-    }
-}
-
-
-// ============================================
-// TEILNEHMER LADEN
-// ============================================
-
-async function loadParticipants() {
-
-    participants.innerHTML =
-        "<p>Teilnehmer werden geladen...</p>";
-
-
-    const { data, error } =
-        await supabaseClient
-            .from("responses")
-            .select("*")
-            .order("created_at", {
-                ascending: false
-            });
-
-
-    if (error) {
-
-        console.error(
-            "Fehler beim Laden:",
-            error
-        );
-
-        participants.innerHTML =
-            `<p class="error">
-                Fehler beim Laden:<br>
-                ${error.message}
-            </p>`;
-
-        return;
-    }
-
-
-    console.log(
-        "Teilnehmer:",
-        data
-    );
-
-
-    // ========================================
-    // ZÄHLER
-    // ========================================
-
-    const total =
-        data.length;
-
-    const attending =
-        data.filter(
-            person => person.attending === true
-        ).length;
-
-    const notAttending =
-        data.filter(
-            person => person.attending === false
-        ).length;
-
-
-    if (totalCount) {
-        totalCount.textContent = total;
-    }
-
-    if (yesCount) {
-        yesCount.textContent = attending;
-    }
-
-    if (noCount) {
-        noCount.textContent = notAttending;
-    }
-
-
-    // ========================================
-    // KEINE TEILNEHMER
-    // ========================================
-
-    if (data.length === 0) {
-
-        participants.innerHTML =
-            "<p>Noch keine Antworten vorhanden.</p>";
-
-        return;
-    }
-
-
-    // ========================================
-    // LISTE
-    // ========================================
-
-    participants.innerHTML = "";
-
-
-    data.forEach(person => {
-
-        const item =
-            document.createElement("div");
-
-        item.className =
-            "participant";
-
-
-        const status =
-            person.attending
-                ? "🥳 Dabei"
-                : "🥲 Nicht dabei";
-
-
-        item.innerHTML = `
-            <strong>${escapeHtml(person.name)}</strong>
-            <span>${status}</span>
-        `;
-
-
-        participants.appendChild(item);
-
-    });
-}
-
-
-// ============================================
-// HTML SICHER AUSGEBEN
-// ============================================
-
-function escapeHtml(text) {
-
-    const div =
-        document.createElement("div");
-
-    div.textContent = text;
-
-    return div.innerHTML;
-}
-
-
-// ============================================
-// LOGOUT
-// ============================================
-
-if (logoutButton) {
-
-    logoutButton.onclick = async function () {
-
-        await supabaseClient.auth.signOut();
-
-        location.reload();
-    };
-}
-
-
-// ============================================
-// LOGIN-MELDUNG
-// ============================================
-
-function showLoginMessage(text) {
-
-    if (loginMessage) {
-
-        loginMessage.textContent =
-            text;
-    }
-}
-
-
-// ============================================
-// AUTH-ÄNDERUNGEN
-// ============================================
-
-supabaseClient.auth.onAuthStateChange(
-    function (event, session) {
-
-        if (session) {
-
-            showAdminPanel();
-
-            loadParticipants();
-
-        } else {
-
-            showLoginPanel();
+            max-width: 650px;
         }
-    }
-);
+
+
+        .card {
+
+            background:
+                rgba(255,255,255,0.08);
+
+            border:
+                1px solid
+                rgba(255,255,255,0.15);
+
+            border-radius: 25px;
+
+            padding: 30px 25px;
+
+            backdrop-filter:
+                blur(15px);
+
+            box-shadow:
+                0 20px 60px
+                rgba(0,0,0,0.4);
+
+            margin-bottom: 20px;
+        }
+
+
+        h1 {
+
+            margin-top: 0;
+
+            text-align: center;
+
+            font-size: 32px;
+        }
+
+
+        h2 {
+
+            margin-top: 0;
+        }
+
+
+        input {
+
+            width: 100%;
+
+            padding: 15px;
+
+            border: none;
+
+            border-radius: 12px;
+
+            font-size: 16px;
+
+            margin-bottom: 12px;
+        }
+
+
+        button {
+
+            width: 100%;
+
+            padding: 15px;
+
+            border: none;
+
+            border-radius: 12px;
+
+            font-size: 16px;
+
+            font-weight: 700;
+
+            cursor: pointer;
+        }
+
+
+        .login-button {
+
+            background: white;
+
+            color: #111;
+        }
+
+
+        .logout-button {
+
+            background:
+                rgba(255,80,80,0.2);
+
+            color: white;
+
+            margin-top: 20px;
+        }
+
+
+        .message {
+
+            margin-top: 15px;
+
+            padding: 12px;
+
+            border-radius: 10px;
+
+            background:
+                rgba(255,255,255,0.1);
+
+            text-align: center;
+        }
+
+
+        .stats {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 10px;
+
+            margin: 20px 0;
+        }
+
+
+        .stat {
+
+            background:
+                rgba(255,255,255,0.08);
+
+            border-radius: 15px;
+
+            padding: 15px;
+
+            text-align: center;
+        }
+
+
+        .stat-number {
+
+            display: block;
+
+            font-size: 30px;
+
+            font-weight: 800;
+
+            margin-bottom: 5px;
+        }
+
+
+        .stat-label {
+
+            font-size: 13px;
+
+            opacity: 0.8;
+        }
+
+
+        .participant {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            gap: 15px;
+
+            padding: 15px;
+
+            margin-bottom: 10px;
+
+            background:
+                rgba(255,255,255,0.08);
+
+            border-radius: 12px;
+        }
+
+
+        .participant strong {
+
+            font-size: 17px;
+        }
+
+
+        .participant span {
+
+            white-space: nowrap;
+        }
+
+
+        .error {
+
+            background:
+                rgba(255,80,80,0.2);
+
+            padding: 15px;
+
+            border-radius: 12px;
+        }
+
+
+        .hidden {
+
+            display: none !important;
+        }
+
+
+        @media (max-width: 500px) {
+
+            .stats {
+
+                grid-template-columns:
+                    1fr;
+            }
+
+
+            .participant {
+
+                flex-direction: column;
+
+                align-items: flex-start;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+    <!-- ================================= -->
+    <!-- LOGIN -->
+    <!-- ================================= -->
+
+    <div
+        id="loginPanel"
+        class="card"
+    >
+
+        <h1>
+            🔐 Admin
+        </h1>
+
+        <p style="text-align:center;">
+            Melde dich an, um die
+            Gästeliste zu sehen.
+        </p>
+
+
+        <form id="loginForm">
+
+            <input
+                id="email"
+                type="email"
+                placeholder="Deine E-Mail-Adresse"
+                autocomplete="email"
+                required
+            >
+
+
+            <button
+                type="submit"
+                class="login-button"
+            >
+                Login-Link senden
+            </button>
+
+        </form>
+
+
+        <div
+            id="loginMessage"
+            class="message"
+        ></div>
+
+    </div>
+
+
+
+    <!-- ================================= -->
+    <!-- ADMIN -->
+    <!-- ================================= -->
+
+    <div
+        id="adminPanel"
+        class="hidden"
+    >
+
+
+        <div class="card">
+
+            <h1>
+                🎉 Gästeliste
+            </h1>
+
+
+            <div class="stats">
+
+                <div class="stat">
+
+                    <span
+                        id="totalCount"
+                        class="stat-number"
+                    >
+                        0
+                    </span>
+
+                    <span class="stat-label">
+                        Antworten
+                    </span>
+
+                </div>
+
+
+                <div class="stat">
+
+                    <span
+                        id="yesCount"
+                        class="stat-number"
+                    >
+                        0
+                    </span>
+
+                    <span class="stat-label">
+                        Dabei
+                    </span>
+
+                </div>
+
+
+                <div class="stat">
+
+                    <span
+                        id="noCount"
+                        class="stat-number"
+                    >
+                        0
+                    </span>
+
+                    <span class="stat-label">
+                        Nicht dabei
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="card">
+
+            <h2>
+                👥 Teilnehmer
+            </h2>
+
+
+            <div id="participants">
+
+                Teilnehmer werden geladen...
+
+            </div>
+
+
+            <button
+                id="logoutButton"
+                class="logout-button"
+                type="button"
+            >
+                Ausloggen
+            </button>
+
+        </div>
+
+
+    </div>
+
+
+</div>
+
+
+
+<!-- ================================= -->
+<!-- SUPABASE -->
+<!-- ================================= -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+></script>
+
+
+<!-- ================================= -->
+<!-- DEIN ADMIN JAVASCRIPT -->
+<!-- ================================= -->
+
+<script src="admin.js"></script>
+
+
+</body>
+
+</html>
