@@ -1,217 +1,462 @@
 // ============================================
 // SUPABASE
 // ============================================
+
 const SUPABASE_URL =
     "https://rhqxlhoqlrwhordtcrew.supabase.co";
+
 const SUPABASE_KEY =
-    "sb_publishable_O448xTB2EUrv-935BYyZ8Q_9VV4wBcs";
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJocXhsaG9xbHJ3aG9yZHRjcmV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4NDg4ODgsImV4cCI6MjEwNjQyNDg4OH0.ztmFuaanXRHaThmYRdXWY3XciIn7QXbBcx3jEH_2FjE";
+
 const supabaseClient =
     window.supabase.createClient(
         SUPABASE_URL,
         SUPABASE_KEY
     );
+
+
 // ============================================
 // ELEMENTE
 // ============================================
-const loginSection =
-    document.getElementById("loginSection");
-const adminSection =
-    document.getElementById("adminSection");
-const emailInput =
-    document.getElementById("email");
-const loginButton =
-    document.getElementById("loginButton");
-const loginMessage =
-    document.getElementById("loginMessage");
-const logoutButton =
-    document.getElementById("logoutButton");
-const refreshButton =
-    document.getElementById("refreshButton");
-const responsesElement =
-    document.getElementById("responses");
+
+const loginForm = document.getElementById("loginForm");
+const emailInput = document.getElementById("email");
+const loginMessage = document.getElementById("loginMessage");
+
+const adminPanel = document.getElementById("adminPanel");
+const loginPanel = document.getElementById("loginPanel");
+
+const participants = document.getElementById("participants");
+
+const totalCount = document.getElementById("totalCount");
+const yesCount = document.getElementById("yesCount");
+const noCount = document.getElementById("noCount");
+
+const logoutButton = document.getElementById("logoutButton");
+
+
 // ============================================
 // LOGIN
 // ============================================
-loginButton.addEventListener(
-    "click",
-    async () => {
+
+if (loginForm) {
+
+    loginForm.onsubmit = async function (event) {
+
+        event.preventDefault();
+
         const email =
             emailInput.value.trim();
+
         if (!email) {
-            loginMessage.textContent =
-                "Bitte E-Mail eingeben.";
+
+            showLoginMessage(
+                "Bitte E-Mail-Adresse eingeben."
+            );
+
             return;
         }
-        loginButton.disabled = true;
-        loginButton.textContent =
-            "Wird gesendet...";
+
+        showLoginMessage(
+            "Login-Link wird gesendet..."
+        );
+
         const { error } =
             await supabaseClient.auth.signInWithOtp({
+
                 email: email,
+
                 options: {
                     emailRedirectTo:
-    "https://kuhnisami135-create.github.io/samu-18-geburtstag/admin.html"
+                        "https://kuhnisami135-create.github.io/samu-18-geburtstag/admin.html"
                 }
+
             });
+
+
         if (error) {
-            console.error(error);
-            loginMessage.textContent =
-                "Fehler: " + error.message;
-        } else {
-            loginMessage.textContent =
-                "Login-Link wurde an deine E-Mail geschickt. 📩";
+
+            console.error(
+                "LOGIN FEHLER:",
+                error
+            );
+
+            showLoginMessage(
+                "Fehler: " + error.message
+            );
+
+            return;
         }
-        loginButton.disabled = false;
-        loginButton.textContent =
-            "Login-Link senden";
-    }
-);
+
+
+        showLoginMessage(
+            "Login-Link wurde gesendet. Prüfe deine E-Mails."
+        );
+    };
+}
+
+
 // ============================================
 // SESSION PRÜFEN
 // ============================================
+
 async function checkSession() {
-    const {
-        data: { session }
-    } = await supabaseClient.auth.getSession();
-    if (session) {
-        showAdmin();
-    } else {
-        showLogin();
-    }
-}
-// ============================================
-// LOGIN / ADMIN ANZEIGEN
-// ============================================
-function showLogin() {
-    loginSection.classList.remove("hidden");
-    adminSection.classList.add("hidden");
-}
-function showAdmin() {
-    loginSection.classList.add("hidden");
-    adminSection.classList.remove("hidden");
-    loadResponses();
-}
-// ============================================
-// ANTWORTEN LADEN
-// ============================================
-async function loadResponses() {
-    responsesElement.innerHTML =
-        "<p>Lade Antworten...</p>";
+
     const {
         data,
         error
-    } = await supabaseClient
-        .from("responses")
-        .select("*")
-        .order("created_at", {
-            ascending: false
-        });
+    } =
+        await supabaseClient.auth.getSession();
+
+
+    console.log(
+        "SESSION:",
+        data.session
+    );
+
+
     if (error) {
-        console.error(error);
-        responsesElement.innerHTML =
-            `<p>Fehler beim Laden: ${error.message}</p>`;
+
+        console.error(
+            "SESSION FEHLER:",
+            error
+        );
+
+        showLoginMessage(
+            "Session-Fehler: " +
+            error.message
+        );
+
+        showLoginPanel();
+
         return;
     }
-    displayResponses(data);
+
+
+    if (!data.session) {
+
+        console.log(
+            "KEINE SESSION VORHANDEN"
+        );
+
+        showLoginPanel();
+
+        return;
+    }
+
+
+    const user =
+        data.session.user;
+
+
+    console.log(
+        "EINGELOGGT:",
+        user
+    );
+
+
+    console.log(
+        "E-MAIL:",
+        user.email
+    );
+
+
+    console.log(
+        "USER ID:",
+        user.id
+    );
+
+
+    // ========================================
+    // ADMIN ANZEIGEN
+    // ========================================
+
+    showAdminPanel();
+
+
+    // Zeigt zur Kontrolle die erkannte E-Mail
+    if (participants) {
+
+        participants.innerHTML = `
+            <p>
+                Eingeloggt als:<br>
+                <strong>${escapeHtml(user.email || "Keine E-Mail")}</strong>
+            </p>
+            <p>Teilnehmer werden geladen...</p>
+        `;
+    }
+
+
+    await loadParticipants();
 }
+
+
 // ============================================
-// ANTWORTEN ANZEIGEN
+// TEILNEHMER LADEN
 // ============================================
-function displayResponses(data) {
-    const yes =
+
+async function loadParticipants() {
+
+    const {
+        data,
+        error
+    } =
+        await supabaseClient
+            .from("responses")
+            .select("*")
+            .order("created_at", {
+                ascending: false
+            });
+
+
+    console.log(
+        "SELECT ERGEBNIS:",
+        data
+    );
+
+
+    console.log(
+        "SELECT FEHLER:",
+        error
+    );
+
+
+    // ========================================
+    // FEHLER
+    // ========================================
+
+    if (error) {
+
+        participants.innerHTML = `
+            <div class="error">
+                <strong>Fehler beim Laden:</strong><br><br>
+                ${escapeHtml(error.message)}
+            </div>
+        `;
+
+        return;
+    }
+
+
+    // ========================================
+    // ZÄHLER
+    // ========================================
+
+    const total =
+        data.length;
+
+    const attending =
         data.filter(
-            response => response.attending === true
-        );
-    const no =
+            person =>
+                person.attending === true
+        ).length;
+
+    const notAttending =
         data.filter(
-            response => response.attending === false
-        );
-    document.getElementById("yesCount")
-        .textContent = yes.length;
-    document.getElementById("noCount")
-        .textContent = no.length;
-    document.getElementById("totalCount")
-        .textContent = data.length;
+            person =>
+                person.attending === false
+        ).length;
+
+
+    if (totalCount) {
+
+        totalCount.textContent =
+            total;
+    }
+
+
+    if (yesCount) {
+
+        yesCount.textContent =
+            attending;
+    }
+
+
+    if (noCount) {
+
+        noCount.textContent =
+            notAttending;
+    }
+
+
+    // ========================================
+    // KEINE ANTWORTEN
+    // ========================================
+
     if (data.length === 0) {
-        responsesElement.innerHTML =
+
+        participants.innerHTML =
             "<p>Noch keine Antworten vorhanden.</p>";
+
         return;
     }
-    responsesElement.innerHTML =
-        data.map(response => {
-            const date =
-                new Date(response.created_at)
-                    .toLocaleString(
-                        "de-DE",
-                        {
-                            dateStyle: "short",
-                            timeStyle: "short"
-                        }
-                    );
-            return `
-                <div class="response">
-                    <div>
-                        <div class="response-name">
-                            ${escapeHtml(response.name)}
-                        </div>
-                        <div class="response-date">
-                            ${date}
-                        </div>
-                    </div>
-                    <div class="${
-                        response.attending
-                            ? "yes"
-                            : "no"
-                    }">
-                        ${
-                            response.attending
-                                ? "🥳"
-                                : "🥲"
-                        }
-                    </div>
-                </div>
-            `;
-        }).join("");
+
+
+    // ========================================
+    // LISTE
+    // ========================================
+
+    participants.innerHTML = "";
+
+
+    data.forEach(person => {
+
+        const item =
+            document.createElement("div");
+
+        item.className =
+            "participant";
+
+
+        const status =
+            person.attending
+                ? "🥳 Dabei"
+                : "🥲 Nicht dabei";
+
+
+        item.innerHTML = `
+            <strong>
+                ${escapeHtml(person.name)}
+            </strong>
+            <span>
+                ${status}
+            </span>
+        `;
+
+
+        participants.appendChild(item);
+
+    });
 }
+
+
 // ============================================
-// SICHERHEIT: HTML ESCAPEN
+// HTML SICHER AUSGEBEN
 // ============================================
-function escapeHtml(value) {
+
+function escapeHtml(text) {
+
     const div =
         document.createElement("div");
-    div.textContent = value;
+
+    div.textContent =
+        text;
+
     return div.innerHTML;
 }
+
+
 // ============================================
-// AKTUALISIEREN
+// ADMIN ANZEIGEN
 // ============================================
-refreshButton.addEventListener(
-    "click",
-    loadResponses
-);
-// ============================================
-// ABMELDEN
-// ============================================
-logoutButton.addEventListener(
-    "click",
-    async () => {
-        await supabaseClient.auth.signOut();
-        showLogin();
+
+function showAdminPanel() {
+
+    if (loginPanel) {
+
+        loginPanel.classList.add(
+            "hidden"
+        );
     }
-);
+
+
+    if (adminPanel) {
+
+        adminPanel.classList.remove(
+            "hidden"
+        );
+    }
+}
+
+
+// ============================================
+// LOGIN ANZEIGEN
+// ============================================
+
+function showLoginPanel() {
+
+    if (loginPanel) {
+
+        loginPanel.classList.remove(
+            "hidden"
+        );
+    }
+
+
+    if (adminPanel) {
+
+        adminPanel.classList.add(
+            "hidden"
+        );
+    }
+}
+
+
+// ============================================
+// LOGIN-MELDUNG
+// ============================================
+
+function showLoginMessage(text) {
+
+    if (loginMessage) {
+
+        loginMessage.textContent =
+            text;
+    }
+}
+
+
+// ============================================
+// LOGOUT
+// ============================================
+
+if (logoutButton) {
+
+    logoutButton.onclick =
+        async function () {
+
+            await supabaseClient.auth.signOut();
+
+            location.reload();
+        };
+}
+
+
 // ============================================
 // AUTH-ÄNDERUNGEN
 // ============================================
+
 supabaseClient.auth.onAuthStateChange(
-    (event, session) => {
+    async function (event, session) {
+
+        console.log(
+            "AUTH EVENT:",
+            event
+        );
+
+
+        console.log(
+            "AUTH SESSION:",
+            session
+        );
+
+
         if (session) {
-            showAdmin();
+
+            showAdminPanel();
+
+            await loadParticipants();
+
         } else {
-            showLogin();
+
+            showLoginPanel();
         }
     }
 );
+
+
 // ============================================
 // START
 // ============================================
+
 checkSession();
