@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Samus 18. Geburtstag</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- HERO -->
+    <header class="hero">
+        <div class="hero-content">
+            <p class="eyebrow">Du bist eingeladen</p>
+            <h1>Samus 18.<br>Geburtstag</h1>
+            <p class="subtitle">Lass uns zusammen feiern!</p>
+        </div>
+    </header>
+
+    <!-- DETAILS -->
+    <section class="details">
+        <div class="card">
+            <div class="detail-item">
+                <span class="icon">📅</span>
+                <div>
+                    <strong>Datum</strong>
+                    <p>Freitag, 08. Januar 2027</p>
+                </div>
+            </div>
+            <div class="detail-item">
+                <span class="icon">ℹ️</span>
+                <div>
+                    <strong>Weitere Infos</strong>
+                    <p>Uhrzeit und Ort folgen noch</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ANMELDUNG -->
+    <section class="rsvp">
+        <div class="card form-card">
+            <h2>🎉 Anmeldung</h2>
+            <p class="form-intro">Sag uns bitte, ob du kommst.</p>
+
+            <form action="https://formspree.io/f/mwlpdebp" method="POST">
+
+                <div class="field">
+                    <input 
+                        type="text" 
+                        name="name" 
+                        placeholder="Dein Name *" 
+                        required
+                    >
+                </div>
+
+                <div class="field">
+                    <select name="teilnahme" required>
+                        <option value="" disabled selected>Kommst du? *</option>
+                        <option value="Ja, ich komme">Ja, ich komme 🎉</option>
+                        <option value="Nein, ich kann leider nicht">Nein, ich kann leider nicht</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <textarea 
+                        name="nachricht" 
+                        placeholder="Nachricht an Samu (optional)"
+                        rows="3"
+                    ></textarea>
+                </div>
+
+                <!-- Formspree Einstellungen -->
+                <input type="hidden" name="_subject" value="🎉 Neue Anmeldung – Samus 18. Geburtstag">
+                <input type="hidden" name="_template" value="table">
+
+                <button type="submit" class="submit-btn">
+                    Anmeldung absenden
+                </button>
+            </form>
+
+            <p class="hint">* Pflichtfelder</p>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>Wir freuen uns auf dich! 🥳</p>
+    </footer>
+
+</body>
+</html>
